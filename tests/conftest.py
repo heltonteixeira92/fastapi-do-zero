@@ -1,3 +1,4 @@
+import factory
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -10,7 +11,16 @@ from fast_zero.models import User, table_registry
 from fast_zero.security import get_password_hash
 
 
-@pytest.fixture()
+class UserFactory(factory.Factory):
+    class Meta:
+        model = User
+
+    username = factory.Sequence(lambda n: f'test{n}')
+    email = factory.LazyAttribute(lambda obj: f'{obj.username}@test.com')
+    password = factory.LazyAttribute(lambda obj: f'{obj.username}@mudar')
+
+
+@pytest.fixture
 def client(session):
     def get_session_override():
         return session
@@ -22,7 +32,7 @@ def client(session):
     app.dependency_overrides.clear()
 
 
-@pytest.fixture()
+@pytest.fixture
 def session():
     engine = create_engine(
         'sqlite:///:memory:',
@@ -37,13 +47,11 @@ def session():
     table_registry.metadata.drop_all(engine)
 
 
-@pytest.fixture()
+@pytest.fixture
 def user(session):
     pwd = 'testtest'
 
-    user = User(
-        username='Teste',
-        email='teste@test.com',
+    user = UserFactory(
         password=get_password_hash(pwd),
     )
 
@@ -56,7 +64,24 @@ def user(session):
     return user
 
 
-@pytest.fixture()
+@pytest.fixture
+def other_user(session):
+    pwd = 'testtest'
+
+    user = UserFactory(
+        password=get_password_hash(pwd),
+    )
+
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    user.clean_password = pwd  # Monkey Patch // alter. um obj em tempo de exe
+
+    return user
+
+
+@pytest.fixture
 def token(client, user):
     data = {'username': user.email, 'password': user.clean_password}
     response = client.post('auth/token', data=data)

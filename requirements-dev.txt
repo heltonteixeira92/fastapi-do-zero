@@ -48,3 +48,5 @@ sqlalchemy==2.0.31
 pydantic-settings==2.3.4
 alembic==1.13.2
 pwdlib[argon2]
+factory_boy==3.3.1
+freezegun==1.5.1
