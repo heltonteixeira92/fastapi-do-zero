@@ -44,7 +44,7 @@ def client(session):
 
 
 # sem escopo, executa em todas as funções, fica como scope='function'
-@pytest.fixture(scope='session')  # scope session executa uma vez por execução dos testes.
+@pytest.fixture(scope='session')
 def engine():
     with PostgresContainer('postgres:16', driver='psycopg') as postgres:
         _engine = create_engine(postgres.get_connection_url())
